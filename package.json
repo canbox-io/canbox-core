@@ -1,0 +1,19 @@
+{
+    "name": "canbox-core",
+    "version": "0.1.0",
+    "description": "Canbox 核心注入模块 — 通过 electron -r 预加载为所有 Canbox APP 提供统一运行时环境与可选公共服务",
+    "main": "injection.js",
+    "license": "Apache-2.0",
+    "author": "lizl6",
+    "dependencies": {
+        "electron-store": "^8.1.0",
+        "log4js": "^6.9.1",
+        "module-alias": "^2.2.3",
+        "pouchdb": "^9.0.0",
+        "pouchdb-find": "^9.0.0",
+        "@vscode/sudo-prompt": "^9.3.2"
+    },
+    "peerDependencies": {
+        "electron": ">=30.0.0"
+    }
+}
