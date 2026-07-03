@@ -59,6 +59,10 @@ const coreStore = new Store({
 coreStore.set('core.injectionPath', path.resolve(__dirname));
 coreStore.set('core.version', coreVersion);
 
+// 将 env 和 corePath 挂到全局变量，供 APP main.js 直接读取（APP 不 npm install canbox-core）
+global.__CANBOX_ENV__ = env;
+global.__CANBOX_CORE_PATH__ = path.resolve(__dirname);
+
 console.timeEnd('[startup] injection 阶段2: API 注册 (8个模块)');
 console.timeEnd('[startup] injection.js 总耗时 (阶段1+2)');
 
