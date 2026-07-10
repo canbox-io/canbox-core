@@ -59,6 +59,16 @@ const coreStore = new Store({
 coreStore.set('core.injectionPath', path.resolve(__dirname));
 coreStore.set('core.version', coreVersion);
 
+// 将路径信息写入 {userData}/paths.json，供 bin/canbox 启动器读取
+// （userData 是固定路径，不依赖 customDataRoot，bin/canbox 可直接定位）
+const launcherStore = new Store({
+    cwd: env.userData,
+    name: 'paths'
+});
+launcherStore.set('usersPath', env.usersPath);
+launcherStore.set('corePath', path.resolve(__dirname));
+launcherStore.set('coreVersion', coreVersion);
+
 // 将 env 和 corePath 挂到全局变量，供 APP main.js 直接读取（APP 不 npm install canbox-core）
 global.__CANBOX_ENV__ = env;
 global.__CANBOX_CORE_PATH__ = path.resolve(__dirname);
