@@ -12,14 +12,14 @@
  *   - 统一日志（写入 {Users}/logs/canbox.log）
  *
  * 提供的显性 API（APP 通过 IPC 按需调用，黑盒式，APP 不传 appId）：
- *   - store:   键值存储（data/{appId}/store/{name}.json）
- *   - db:      文档数据库（data/{appId}/db/）
- *   - dialog:  原生对话框
- *   - window:  窗口管理 / 通知
- *   - lifecycle: 生命周期回调
- *   - shortcut: 全局快捷键
- *   - sudo:    提权执行
- *   - misc:    杂项功能（openUrl、getUserData 等）
+ *   - store: 键值存储（data/{appId}/store/{name}.json）
+ *   - db:    文档数据库（data/{appId}/db/）
+ *   - misc:  平台环境/诊断信息（hello、getUserData、getCoreVersion、getCorePath、getPlatformInfo）
+ *
+ * 设计原则：canbox-core 是"可选服务提供层"，只提供 APP 自己做不了、
+ * 或做起来会破坏平台约定（如数据隔离）的能力。窗口/对话框/快捷键/提权/
+ * shell 等 APP 一行 Electron 代码即可完成的能力，不再由 core 提供，
+ * 避免侵入 APP 开发、避免让 APP 离不开 core。
  *
  * 阶段 1: 环境初始化（必须最早执行，早于 APP main.js）
  * 阶段 2: API 注册（ipcMain.handle，早于 APP renderer）+ 写 core 路径到 canbox.json
@@ -36,15 +36,10 @@ console.time('[startup] injection 阶段1: 环境初始化 (env.js)');
 const env = require('./lib/env');
 console.timeEnd('[startup] injection 阶段1: 环境初始化 (env.js)');
 
-// 阶段 2: API 注册
-console.time('[startup] injection 阶段2: API 注册 (8个模块)');
+// 阶段 2: API 注册（仅保留体现平台价值的核心服务）
+console.time('[startup] injection 阶段2: API 注册 (3个模块)');
 require('./lib/store').register(ipcMain, env);
 require('./lib/db').register(ipcMain, env);
-require('./lib/dialog').register(ipcMain);
-require('./lib/window').register(ipcMain);
-require('./lib/lifecycle').register(ipcMain);
-require('./lib/shortcut').register(ipcMain);
-require('./lib/sudo').register(ipcMain);
 
 const coreVersion = require('./package.json').version;
 require('./lib/misc').register(ipcMain, env, coreVersion);
@@ -73,7 +68,7 @@ launcherStore.set('coreVersion', coreVersion);
 global.__CANBOX_ENV__ = env;
 global.__CANBOX_CORE_PATH__ = path.resolve(__dirname);
 
-console.timeEnd('[startup] injection 阶段2: API 注册 (8个模块)');
+console.timeEnd('[startup] injection 阶段2: API 注册 (3个模块)');
 console.timeEnd('[startup] injection.js 总耗时 (阶段1+2)');
 
 // 阶段 3: 运行时初始化
