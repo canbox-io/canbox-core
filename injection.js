@@ -36,6 +36,40 @@ console.time('[startup] injection 阶段1: 环境初始化 (env.js)');
 const env = require('./lib/env');
 console.timeEnd('[startup] injection 阶段1: 环境初始化 (env.js)');
 
+// 阶段 1.5: BrowserWindow partition 注入
+// 共享 userData（env.js 阶段1 设置）会让所有 APP 的渲染进程共用同一个
+// Local Storage/leveldb，跨进程打开同一 leveldb 会触发 LOCK 等待，导致
+// 后启动的 APP 卡顿数秒。这里通过 monkey-patch BrowserWindow 构造函数，
+// 在 APP 未显式指定 partition 时自动注入 persist:canbox-{appId}，让每个 APP
+// 拥有独立的 leveldb 文件，物理隔离 LOCK，对 APP 完全透明。
+// APP 显式指定 partition 时尊重 APP 意图，不覆盖。
+(function injectBrowserWindowPartition() {
+    const electron = require('electron');
+    const _OrigBrowserWindow = electron.BrowserWindow;
+    if (!_OrigBrowserWindow || typeof _OrigBrowserWindow !== 'function') return;
+
+    class PatchedBrowserWindow extends _OrigBrowserWindow {
+        constructor(options = {}) {
+            const wp = options.webPreferences || {};
+            if (!wp.partition) {
+                wp.partition = `persist:canbox-${env.appId}`;
+            }
+            options.webPreferences = wp;
+            super(options);
+        }
+    }
+
+    try {
+        Object.defineProperty(electron, 'BrowserWindow', {
+            value: PatchedBrowserWindow,
+            writable: false,
+            configurable: false
+        });
+    } catch (e) {
+        console.warn('[canbox-core] BrowserWindow partition patch 失败:', e.message);
+    }
+})();
+
 // 阶段 2: API 注册（仅保留体现平台价值的核心服务）
 console.time('[startup] injection 阶段2: API 注册 (3个模块)');
 require('./lib/store').register(ipcMain, env);
