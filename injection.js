@@ -60,11 +60,7 @@ console.timeEnd('[startup] injection 阶段1: 环境初始化 (env.js)');
     }
 
     try {
-        Object.defineProperty(electron, 'BrowserWindow', {
-            value: PatchedBrowserWindow,
-            writable: false,
-            configurable: false
-        });
+        electron.BrowserWindow = PatchedBrowserWindow;
     } catch (e) {
         console.warn('[canbox-core] BrowserWindow partition patch 失败:', e.message);
     }
