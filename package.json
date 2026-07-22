@@ -1,6 +1,6 @@
 {
     "name": "canbox-core",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "Canbox 核心注入模块 — 通过 electron -r 预加载为所有 Canbox APP 提供统一运行时环境与可选公共服务",
     "main": "injection.js",
     "license": "Apache-2.0",
