@@ -56,7 +56,8 @@ canbox-core/
 │   ├── db.js                 # 文档数据库（PouchDB，按 appId 黑盒隔离）
 │   └── misc.js               # 平台环境/诊断信息
 ├── .gitignore
-└── README.md
+├── README.md
+└── README_zh-CN.md
 ```
 
 ## 启动方式

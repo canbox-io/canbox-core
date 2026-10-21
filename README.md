@@ -56,7 +56,8 @@ canbox-core/
 │   ├── db.js                 # document database (PouchDB, black-box isolated per appId)
 │   └── misc.js               # platform environment / diagnostics
 ├── .gitignore
-└── README.md
+├── README.md
+└── README_zh-CN.md
 ```
 
 ## Launching
