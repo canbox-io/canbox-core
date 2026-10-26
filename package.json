@@ -4,7 +4,7 @@
     "description": "Canbox 核心注入模块 — 通过 electron -r 预加载为所有 Canbox APP 提供统一运行时环境与可选公共服务",
     "main": "injection.js",
     "license": "Apache-2.0",
-    "author": "lizl6",
+    "author": "rexlevin",
     "dependencies": {
         "electron-store": "^8.1.0",
         "log4js": "^6.9.1",
