@@ -54,7 +54,8 @@ canbox-core/
 │   ├── logger.js             # shared logging (log4js)
 │   ├── store.js              # key-value store (electron-store, black-box isolated per appId)
 │   ├── db.js                 # document database (PouchDB, black-box isolated per appId)
-│   └── misc.js               # platform environment / diagnostics
+│   ├── misc.js               # platform environment / diagnostics
+│   └── whats-new.js          # What's New (lastSeenVersion + CHANGELOG parsing)
 ├── .gitignore
 ├── README.md
 └── README_zh-CN.md
@@ -159,6 +160,31 @@ misc: {
 | getCorePath     | string  | canbox-core root directory path      |
 | getPlatformInfo | object  | platform/arch/versions               |
 
+### whatsNew — What's New (3 channels)
+
+A reusable way to tell users what changed after an app upgrade: records `lastSeenVersion` per app, reads and parses the app's root `CHANGELOG.md`, and aggregates all version sections since the last seen version (complete even across multiple releases). **Apps do not need to implement parsing or deduplication themselves.**
+
+```javascript
+whatsNew: {
+    check: (options) => ipcRenderer.invoke('canbox.whatsNew.check', options),
+    ack: (version) => ipcRenderer.invoke('canbox.whatsNew.ack', version),
+    getVersion: () => ipcRenderer.invoke('canbox.whatsNew.getVersion')
+}
+```
+
+`check` options (all optional): `{ version, maxSections, changelog, changelogPath }`
+
+- `version`: current app version, defaults to `app.getVersion()`
+- `maxSections`: maximum number of version sections, defaults to 3
+- `changelog`: raw changelog text (takes precedence over `changelogPath`)
+- `changelogPath`: defaults to `{appPath}/CHANGELOG.md`
+
+Returns `{ success, show, currentVersion, lastSeenVersion, sections[] }` where `sections` is `{ version, date, body }[]`.
+
+Convention: changelog entries use `## [x.y.z] - YYYY-MM-DD`, with Chinese and English lines written in pairs; renderers can filter by language with `splitBilingualBody(body, locale)`. On first run (no record) the service only records the current version and returns nothing to show.
+
+The module can also be required directly in the main process: `require(corePath + '/lib/whats-new')`, exposing `check` / `ack` / `parseChangelog` / `splitBilingualBody`.
+
 ## Apps do not need to depend on canbox-core
 
 An app's `package.json` **does not** need to declare `canbox-core` as a dependency. An app can:
@@ -166,7 +192,7 @@ An app's `package.json` **does not** need to declare `canbox-core` as a dependen
 - **Run standalone** — `electron APP/`, using its own Electron binary and not sharing the canbox environment
 - **Run in canbox mode** — `electron -r canbox-core/injection.js APP/ --app-id={appId}`, automatically getting the canbox environment
 
-The app code is **identical** in both modes, with no conditional compilation. When using the store/db provided by canbox-core, the IPC channels are `canbox.store.*` / `canbox.db.*` / `canbox.misc.*`; when not using them, the app is completely unaware.
+The app code is **identical** in both modes, with no conditional compilation. When using the store/db/whatsNew provided by canbox-core, the IPC channels are `canbox.store.*` / `canbox.db.*` / `canbox.misc.*` / `canbox.whatsNew.*`; when not using them, the app is completely unaware.
 
 ## License
 

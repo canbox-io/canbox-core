@@ -54,7 +54,8 @@ canbox-core/
 │   ├── logger.js             # 统一日志（log4js）
 │   ├── store.js              # 键值存储（electron-store，按 appId 黑盒隔离）
 │   ├── db.js                 # 文档数据库（PouchDB，按 appId 黑盒隔离）
-│   └── misc.js               # 平台环境/诊断信息
+│   ├── misc.js               # 平台环境/诊断信息
+│   └── whats-new.js          # 更新内容（lastSeenVersion + CHANGELOG 解析）
 ├── .gitignore
 ├── README.md
 └── README_zh-CN.md
@@ -159,6 +160,31 @@ misc: {
 | getCorePath     | string | canbox-core 根目录路径 |
 | getPlatformInfo | object | platform/arch/versions |
 
+### whatsNew — 更新内容（3 个通道）
+
+APP 升级后告知用户"改了什么"的通用能力：按 APP 记录 `lastSeenVersion`、读取并解析 APP 根目录的 `CHANGELOG.md`、聚合期间所有版本段落（跨多版本升级也完整）。**APP 不需要自己实现解析与去重逻辑。**
+
+```javascript
+whatsNew: {
+    check: (options) => ipcRenderer.invoke('canbox.whatsNew.check', options),
+    ack: (version) => ipcRenderer.invoke('canbox.whatsNew.ack', version),
+    getVersion: () => ipcRenderer.invoke('canbox.whatsNew.getVersion')
+}
+```
+
+`check` 参数（全部可选）：`{ version, maxSections, changelog, changelogPath }`
+
+- `version`：当前 APP 版本，默认 `app.getVersion()`
+- `maxSections`：最多返回的版本段落数，默认 3
+- `changelog`：直接传入 changelog 文本（优先于 `changelogPath`）
+- `changelogPath`：默认 `{appPath}/CHANGELOG.md`
+
+返回：`{ success, show, currentVersion, lastSeenVersion, sections[] }`，`sections` 为 `{ version, date, body }[]`。
+
+约定：changelog 条目格式为 `## [x.y.z] - YYYY-MM-DD`，正文中文一行、英文一行成对书写；渲染层可用 `splitBilingualBody(body, locale)` 筛选当前语言。首次运行（无记录）只写入当前版本、不返回待展示内容。
+
+模块也可在主进程直接引用：`require(corePath + '/lib/whats-new')`，使用 `check` / `ack` / `parseChangelog` / `splitBilingualBody`。
+
 ## APP 无需依赖 canbox-core
 
 APP 的 `package.json` **不需要**声明 `canbox-core` 为依赖。APP 可以：
@@ -166,7 +192,7 @@ APP 的 `package.json` **不需要**声明 `canbox-core` 为依赖。APP 可以�
 - **独立运行** — `electron APP/`，用自己的 Electron 二进制，不共享 canbox 环境
 - **canbox 模式运行** — `electron -r canbox-core/injection.js APP/ --app-id={appId}`，自动获得 canbox 环境
 
-两种方式下 APP 代码**完全相同**，无需任何条件编译。使用 canbox-core 提供的 store/db 时，IPC 通道为 `canbox.store.*` / `canbox.db.*` / `canbox.misc.*`；不使用则无感知。
+两种方式下 APP 代码**完全相同**，无需任何条件编译。使用 canbox-core 提供的 store/db/whatsNew 时，IPC 通道为 `canbox.store.*` / `canbox.db.*` / `canbox.misc.*` / `canbox.whatsNew.*`；不使用则无感知。
 
 ## 许可证
 

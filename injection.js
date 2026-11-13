@@ -15,6 +15,7 @@
  *   - store: 键值存储（data/{appId}/store/{name}.json）
  *   - db:    文档数据库（data/{appId}/db/）
  *   - misc:  平台环境/诊断信息（hello、getUserData、getCoreVersion、getCorePath、getPlatformInfo）
+ *   - whatsNew: 更新内容（check、ack、getVersion），见 lib/whats-new.js
  *
  * 设计原则：canbox-core 是"可选服务提供层"，只提供 APP 自己做不了、
  * 或做起来会破坏平台约定（如数据隔离）的能力。窗口/对话框/快捷键/提权/
@@ -67,12 +68,14 @@ console.timeEnd('[startup] injection 阶段1: 环境初始化 (env.js)');
 })();
 
 // 阶段 2: API 注册（仅保留体现平台价值的核心服务）
-console.time('[startup] injection 阶段2: API 注册 (3个模块)');
+console.time('[startup] injection 阶段2: API 注册 (4个模块)');
 require('./lib/store').register(ipcMain, env);
 require('./lib/db').register(ipcMain, env);
 
 const coreVersion = require('./package.json').version;
 require('./lib/misc').register(ipcMain, env, coreVersion);
+// 更新内容服务：按 APP 记录 lastSeenVersion + 解析 CHANGELOG，供所有 APP 统一复用
+require('./lib/whats-new').register(ipcMain);
 
 // 将 canbox-core 根目录路径写入 {Users}/canbox.json，供 canbox-developer 等 APP 获取
 // （developer 启动其他 APP 时需要知道 injection.js 的绝对路径）
@@ -116,5 +119,6 @@ module.exports = {
     get appId() { return env.appId; },
     get store() { return require('./lib/store'); },
     get db() { return require('./lib/db'); },
+    get whatsNew() { return require('./lib/whats-new'); },
     get logger() { return require('./lib/logger').get(); }
 };
