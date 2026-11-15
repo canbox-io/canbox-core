@@ -101,7 +101,7 @@ launcherStore.set('coreVersion', coreVersion);
 global.__CANBOX_ENV__ = env;
 global.__CANBOX_CORE_PATH__ = path.resolve(__dirname);
 
-console.timeEnd('[startup] injection 阶段2: API 注册 (3个模块)');
+console.timeEnd('[startup] injection 阶段2: API 注册 (4个模块)');
 console.timeEnd('[startup] injection.js 总耗时 (阶段1+2)');
 
 // 阶段 3: 运行时初始化
